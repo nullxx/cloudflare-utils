@@ -1,7 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 
-export interface DeleteDNSRecordResponse {
-    id: string;
+interface GeneralCloudflareAPIResponse<T> {
+    successs: boolean;
+    result: T
 }
 
 export interface DNSRecord {
@@ -19,13 +20,14 @@ export interface DNSRecord {
     modified_on: string;
 }
 
-interface GeneralCloudflareAPIResponse<T> {
-    successs: boolean;
-    result: T
+export interface DeleteDNSRecordResponse {
+    id: string;
 }
 
+const BASE_URL = 'https://api.cloudflare.com/client/v4';
+
 const instance = axios.create({
-    baseURL: process.env.BASE_URL,
+    baseURL: BASE_URL,
     headers: {
         "Authorization": "Bearer " + process.env.AUTH_BEARER_TOKEN,
         "Content-Type": "application/json"

@@ -1,11 +1,14 @@
 import { getDNSRecords, DNSRecord, deleteDNSRecord } from './lib/cloudflare';
 import { isWebUp } from './lib/http';
+const { Confirm, Select, Input } = require('enquirer');
 
-async function deleteUnUsedDNS() {
-    if (!process.env.DNS_ZONE_ID) throw new Error('No env DNS_ZONE_ID');
-    const dnsRecords = await getDNSRecords(process.env.DNS_ZONE_ID);
+
+async function deleteUnUsedDNS(zoneId: string) {
+    const dnsRecords = await getDNSRecords(zoneId);
+
     const toDelete: DNSRecord[] = [];
     const toIgnore = ['TXT', 'MX'];
+
     for (const record of dnsRecords) {
         console.log('%d/%d Processing %s created on %s', dnsRecords.indexOf(record), dnsRecords.length, record.name, record.created_on);
 
@@ -18,11 +21,44 @@ async function deleteUnUsedDNS() {
         if (!isUp) toDelete.push(record);
     }
     console.log('Deleting %d records', toDelete.length);
-    // return;
+
     for (const record of toDelete) {
-        console.log('Deleting %s', record.name);
-        // deleteDNSRecord(record);
+        const prompt = new Confirm({
+            name: 'question',
+            message: `Do you want to delete ${record.name}`,
+        });
+
+        await prompt.run();
+        if (prompt.value) await deleteDNSRecord(record);
+
     }
 }
 
-deleteUnUsedDNS();
+async function main() {
+    const prompt = new Select({
+        name: 'question',
+        message: 'What do you want to do?',
+        choices: [
+            "Delete unused DNS records",
+            "Exit",
+        ],
+    });
+
+    await prompt.run();
+
+    switch (prompt.value) {
+        case 'Delete unused DNS records':
+            const promptZoneId = new Input({
+                name: 'question',
+                message: 'Enter the DNS_ZONE_ID',
+            });
+            await promptZoneId.run();
+
+            await deleteUnUsedDNS(promptZoneId.value);
+            break;
+        case 'Exit':
+            process.exit(0);
+    }
+}
+
+main();
