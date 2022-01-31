@@ -3,5 +3,5 @@
 A simple DNS utils for Cloudflare
 
 ```console
-npm start
+AUTH_BEARER_TOKEN=xxxx npm start
 ```
